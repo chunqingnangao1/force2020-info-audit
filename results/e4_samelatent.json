@@ -1,0 +1,12 @@
+{
+ "n_segments": 162,
+ "H3a_primary_r_HfbmReg_vs_Hslid": -0.20560179969617948,
+ "H3a_boot95": [
+  -0.40097114598119554,
+  -0.045913866991317734
+ ],
+ "sanity_r_HsegDfa_vs_Hslid": 0.5975900175470358,
+ "contrast_r_HfbmAlpha_vs_Hslid": 0.1763304902166327,
+ "median_H_fbm_reg": 0.1815655380487442,
+ "median_H_slid": 0.1750288989969816
+}

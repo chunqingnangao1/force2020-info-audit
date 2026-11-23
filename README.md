@@ -1,0 +1,113 @@
+# Information accounting for nonlinear well-log features
+
+Code and pipeline for: *"Information accounting for nonlinear well-log features: how much unique
+lithofacies information remains beyond linear statistics?"* (target journal: Computers &
+Geosciences).
+
+The paper asks whether the nonlinear features widely used on well logs (Hurst exponent via DFA,
+sample entropy, Lyapunov exponents, correlation dimension) carry lithofacies information beyond
+conventional linear statistics, and answers it with a five-step audit protocol:
+
+1. **Estimator validity audit** — synthetic benchmarks (fBm, AR(1)) swept over true H × length ×
+   instrument smoothing × noise; yields validity-domain tables for each estimator.
+2. **Identifiability phase diagram** — synthetic stratigraphy with equal-mean, equal-variance,
+   different-correlation intra-bed texture; isolates structure-only information.
+3. **Information accounting** — partial information decomposition (PID; Williams–Beer and MMI
+   quantifiers) of window features about lithofacies on the FORCE 2020 benchmark, with
+   within-well block-permutation nulls and BH-FDR correction.
+4. **Prediction-increment cross-check** — logistic and XGBoost, leave-wells-out, paired per-fold
+   tests; same-scale rich linear baseline and class-balanced training controls.
+5. **Kernel-encoding correspondence** — exact GP regression with an fBm kernel vs sliding-window
+   DFA-H; composite-kernel intervention confirms the detrending-asymmetry mechanism.
+
+Plus a **geological generality map** (bed thickness × facies contrast × sequence persistence)
+showing the nonlinear information share never exceeds 8% across the tested geological space.
+
+## Installation
+
+Requires Python 3.12 (any ≥3.10 should work) with:
+
+```
+pip install -r requirements.txt
+```
+
+Core dependencies: numpy, scipy, pandas, scikit-learn, xgboost, matplotlib, nolds, lasio,
+openpyxl, torch (CPU is sufficient; all experiments in the paper ran on a laptop CPU),
+python-docx (only for manuscript builds), pypdf (verification only).
+
+## Data
+
+The pipeline uses the public [FORCE 2020 well-log and lithofacies dataset](https://zenodo.org/records/4351156)
+(CC-BY-4.0, DOI 10.5281/zenodo.4351156, 118 wells, Norwegian continental shelf). Run:
+
+```
+python download_chunks.py
+```
+
+(a parallel chunked downloader; a plain `curl` of the Zenodo record works too). The formation-top
+and scoring-matrix spreadsheets are fetched automatically by the cleaning step.
+
+## Reproducing the paper
+
+One command, end to end (approx. 12 h on a 6-core laptop CPU; every stage checkpoints to
+`results/` and can be resumed):
+
+```
+python run_all.py
+```
+
+Stages (each also runnable alone — see `run_all.py` for the exact commands):
+
+| Stage | Script | Output |
+|---|---|---|
+| clean + stratigraphy join | `src/features/build_clean.py` | `data/clean/wells_raw.csv.gz` |
+| sliding-window features | `src/features/extract_windows.py` | `results/e3_windows.csv.gz` |
+| PID main tables | `src/pid/run_pid.py` | `results/e3_pid_tables.csv` |
+| prediction increments | `src/pid/run_predict_increment.py` | `results/e3_predict_increment.csv` |
+| robustness suite | `src/pid/run_e3_robust.py` | `results/e3_robustness.csv` |
+| 10k permutations + surrogate split | `src/pid/run_pid_10k_rejectsplit.py` | `results/e3_pid_10k.csv`, `e3_pid_rejectsplit.csv` |
+| second target (groups) | `src/pid/run_grouptarget.py` | `results/e3_pid_grouptarget.csv` |
+| E0 baseline | `src/baselines/train_e0.py` | `results/e0_metrics.json` |
+| E0-style ablation + per-class | `src/pid/run_e0plus_cw.py` | `results/e3_e0plus_nonlinear.csv` |
+| n=1024 + confidence sensitivity | `src/pid/run_n1024_conf.py` | `results/e3_pid_n1024.csv` |
+| same-scale + balanced controls | `src/pid/run_rich_baseline.py` | `results/e4_same_scale.csv` |
+| validity audit (E1/E1b) | `src/hygiene/e1_hygiene.py`, `e1b_dfa_conventions.py` | `results/e1_*.csv` |
+| surrogate test | `src/hygiene/run_proxy_test.py` | `results/proxy_test.csv` |
+| identifiability (E2) | `src/synthetic/e2v2_identifiability.py` | `results/e2v2_identifiability.csv` |
+| generality map (E5) | `src/synthetic/e5_generality.py` | `results/e5_generality.csv` |
+| GP kernel encoding (E4/E4b) | `src/gp/run_e4_kernel.py`, `run_e4b_composite.py` | `results/e4_*.csv` |
+
+All random seeds are fixed in the scripts; reruns reproduce the paper's numbers (the pipeline was
+in fact rebuilt from scratch from the public archive during the study and reproduced every
+headline value).
+
+Figures: `make_figures.py`, `make_schematics_r3.py`, `make_figures_r4.py`, `make_f14.py` →
+`figures/`.
+
+## Repository layout
+
+```
+src/
+  features/   cleaning, windowing, feature extraction
+  hygiene/    estimator validity audit, surrogate tests
+  synthetic/  forward modelling, identifiability, generality map
+  pid/        PID core, robustness, second target, prediction controls
+  gp/         exact-GP kernel encoding (pure torch)
+  baselines/  E0 strong baseline
+results/      all CSV/JSON outputs (regenerated by run_all.py)
+figures/      all paper figures
+data/         NOT in the repo; downloaded from Zenodo (CC-BY-4.0)
+docs/         manuscript sources (not included in this public release)
+```
+
+## Inputs, outputs, options
+
+Every stage script documents its inputs at the top of the file and prints its outputs. Key
+protocol constants (window length 512, stride 256, majority threshold 0.6, permutation counts,
+seeds) are set as module-level constants at the head of each script and were frozen before
+analysis for the paper. Changing them is intended for sensitivity studies, not reproduction.
+
+## License
+
+Code: MIT (see LICENSE). Data: CC-BY-4.0 via Zenodo, cited above. The FORCE 2020 dataset is
+© Equinor/NPD released under CC-BY-4.0.

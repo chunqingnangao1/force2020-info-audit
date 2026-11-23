@@ -1,0 +1,17 @@
+{
+ "n_segments": 165,
+ "composite_r_Hrough_vs_Hslid": 0.08334905176246937,
+ "composite_boot95": [
+  -0.10694601366107673,
+  0.23801680106887488
+ ],
+ "pure_fbm_r_reference": -0.21,
+ "r_trendshare_vs_Hslid": 0.06779589706734568,
+ "trendshare_boot95": [
+  -0.06690912261044847,
+  0.20022197149625712
+ ],
+ "median_H_rough": 0.12889364361763,
+ "median_trend_share": 0.622844370292416,
+ "interpretation": "trend share explains the negative correlation"
+}

@@ -1,0 +1,8 @@
+{
+ "n_segments": 556,
+ "alpha": 0.01,
+ "n_surrogates": 199,
+ "reject_rate_sampen": 0.36510791366906475,
+ "reject_rate_tir": 0.29676258992805754,
+ "reject_rate_any": 0.5377697841726619
+}
